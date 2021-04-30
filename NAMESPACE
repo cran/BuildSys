@@ -1,0 +1,18 @@
+importFrom("digest", "digest")
+importFrom("methods", "is", "new")
+import("utils")
+export("initProjectFromFolder",
+       "buildMakefile",
+       "make",
+       "libraryPath",
+       "sourcePath",
+       "includePath",
+       "objPath",
+       "installLibraryPath",
+       "installIncludePath",
+       "loadLibrary",
+       "unloadLibrary",
+       "vcDebug",
+       "clean")
+ exportClasses("BSysSourceFile",
+               "BSysProject")
