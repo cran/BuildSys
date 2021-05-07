@@ -1,7 +1,7 @@
-bf2aacf1645afe38a8d291a188f6e6ec *DESCRIPTION
+2497944fd5e26fed7485737472eaf368 *DESCRIPTION
 5d02bcba3941762535ad5557da2b504b *NAMESPACE
-bcb5fd57a9900a853eaf1e504fd93711 *R/BuildSys.R
-ce7498da2eac6ab33616ca30536c8d4a *build/partial.rdb
+97df2ca89b297411fe6af290bcfbd781 *R/BuildSys.R
+fe96daa345f7c05a14acd6e5de7a5eac *build/partial.rdb
 866570617ff7b0bf292d562c43f0bb09 *man/BSysProject-class.Rd
 0ac7774bcd798f8003cab804a867c002 *man/BSysSourceFile-class.Rd
 3593728f46f74adb2deff9f8ba09c46d *man/BuildSys-package.Rd
