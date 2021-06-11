@@ -416,8 +416,6 @@ setMethod("initProjectFromFolder", "BSysProject",
       FullPath <- addSlash(getwd())
     }
 
-    IsSolaris <- grepl('SunOS', Sys.info()['sysname'])
-
     .Object@WorkingFolder       <- FullPath
     .Object@ProjectName         <- Name
     .Object@SourceName          <- ""
@@ -430,7 +428,7 @@ setMethod("initProjectFromFolder", "BSysProject",
     .Object@Packages            <- Packages
     .Object@Includes            <- c(R.home("include"), Includes)
     .Object@Defines             <- Defines
-    .Object@Libraries           <- if (IsSolaris) Libraries else c(paste(RLIBPATH, "/R", sep=""), Libraries)
+    .Object@Libraries           <- Libraries
     .Object@CFLAGS              <- CFLAGS
     .Object@CXXFLAGS            <- CXXFLAGS
     .Object@FFLAGS              <- FFLAGS
@@ -669,8 +667,20 @@ setMethod("buildMakefile", "BSysProject",
       }
 
       LDFLAGS <- c("-shared")
+      WinSub  <- ""
 
-      if (Sys.info()["sysname"] != "Windows")
+      if (Sys.info()["sysname"] == "Windows")
+      {
+        if (Sys.info()["machine"]=="x86-64")
+        {
+          WinSub <- "x64/"
+        }
+        else
+        {
+          WinSub <- "x32/"
+        }
+      }
+      else
       {
         COMMONFLAGS <- c(COMMONFLAGS, "-fPIC")
         LDFLAGS     <- c(LDFLAGS, "-fPIC")
@@ -726,11 +736,13 @@ setMethod("buildMakefile", "BSysProject",
         {
           # mingw64
           gcc.path <- sub("/mingw\\d\\d", "/mingw64", gcc.path)
+          WinSub   <- "x64/"
         }
         else
         {
           # mingw32
           gcc.path <- sub("/mingw\\d\\d", "/mingw32", gcc.path)
+          WinSub   <- "x32/"
         }
 
         gcc.dir <- sub("/gcc.*", "/", gcc.path)
@@ -739,6 +751,9 @@ setMethod("buildMakefile", "BSysProject",
       # Build makefile
       MakefileTxt <-c(
         idStamp(),
+        paste("R_SHARE_DIR=", R.home("share"), sep=""),
+        paste("R_HOME=", R.home(), sep=""),
+        paste("include $(R_HOME)/etc/", WinSub, "Makeconf", sep=""), 
         paste("CC=", gcc.dir, "gcc", sep=""),
         paste("CXX=", gcc.dir, "g++", sep=""),
         paste("FC=", gcc.dir, "gfortran", sep=""),
@@ -752,7 +767,7 @@ setMethod("buildMakefile", "BSysProject",
               paste(sapply(.Object@SourceFiles, function(item){ gsub("\\..*$", ".o", item@Filename)}), collapse=" \\\n"), sep=""),
         "",
         paste(DlibName, " : $(objects)", sep=""),
-        paste("\t$(CXX) -o ", DlibName, " $(LDFLAGS) $(objects) $(LDLIBS)", sep=""),
+        paste("\t$(CXX) -o ", DlibName, " $(LDFLAGS) $(objects) $(LDLIBS) $(LIBR)", sep=""),
         ""
       )
 
@@ -860,8 +875,31 @@ setMethod("make", "BSysProject",
       CapturePath  <- paste(.Object@WorkingFolder, .Object@ProjectName, ".log", sep="")
       ScriptPath   <- paste(.Object@WorkingFolder, .Object@ProjectName, ".sh", sep="")
       FinishedFile <- paste(.Object@WorkingFolder, .Object@ProjectName, ".fin", sep="")
-      CaptureCmd   <- if (IsWindows) paste("2>&1 | tee", quoteArg(CapturePath)) else ""
 
+      hasTee <- function()
+      {
+        TestCmd <- "tee --version &>/dev/null"
+
+        # construct test script to see if tee is present
+        BashScript <- c("#!/bin/bash",
+                        TestCmd)
+
+        ScriptFile <- file(ScriptPath, "wt")
+        writeLines(BashScript, ScriptFile)
+        close(ScriptFile)
+
+        command.line <- paste(Sys.which("bash"), quoteArg(ScriptPath))
+        result <- try(system(command.line, wait=TRUE), silent=TRUE)
+        unlink(ScriptFile)
+
+        hasTee <- ((class(result) != "try-error") && (result == 0))
+
+        return (hasTee)
+      }
+
+      HasTee      <- hasTee()
+      CaptureCmd  <- if (IsWindows && HasTee) paste("2>&1 | tee", quoteArg(CapturePath)) else ""
+      
       # run make
       if (Operation == "clean")
       {
@@ -894,7 +932,7 @@ setMethod("make", "BSysProject",
       
       unloadLibrary(.Object)
 
-      if (Sys.info()["sysname"] == "Windows")
+      if (IsWindows && HasTee)
       {
         system(command.line, wait=FALSE, invisible=FALSE)
       }
@@ -915,7 +953,7 @@ setMethod("make", "BSysProject",
       unlink(FinishedFile)
       unlink(ScriptPath)
 
-      if (IsWindows)
+      if (IsWindows && HasTee)
       {
         CaptureFile <- file(CapturePath, "rt")
         writeLines(readLines(CaptureFile))

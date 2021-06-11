@@ -1,8 +1,8 @@
 Package: BuildSys
 Type: Package
 Title: System for Building and Debugging C/C++ Dynamic Libraries
-Version: 1.1.0
-Date: 2021-05-07
+Version: 1.1.1
+Date: 2021-06-11
 Authors@R: c(person("Paavo","Jumppanen",role=c("aut","cre"),email="paavo.jumppanen@csiro.au"))
 Maintainer: Paavo Jumppanen <paavo.jumppanen@csiro.au>
 Author: Paavo Jumppanen [aut, cre]
@@ -17,6 +17,6 @@ Imports: methods, digest
 SystemRequirements: 'Microsoft Visual Code', 'Rtools' on 'Windows',
         'gdb' or 'lldb' depending on which OS
 NeedsCompilation: no
-Packaged: 2021-05-07 00:39:45 UTC; paavo
+Packaged: 2021-06-11 02:52:19 UTC; paavo
 Repository: CRAN
-Date/Publication: 2021-05-07 04:30:03 UTC
+Date/Publication: 2021-06-11 08:40:18 UTC
